@@ -1,6 +1,4 @@
 'use client';
-// contexts/UserContext.js
-
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const UserContext = createContext();
@@ -10,8 +8,6 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
-
-    // Cek kalau storedUser ada dan bukan string 'undefined' atau 'null' kosong
     if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -25,7 +21,12 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  const value = { currentUser, setCurrentUser };
+  const logout = () => {
+    localStorage.removeItem('currentUser');
+    setCurrentUser(null);
+  };
+
+  const value = { currentUser, setCurrentUser, logout };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

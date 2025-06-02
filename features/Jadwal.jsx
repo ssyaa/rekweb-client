@@ -1,19 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const Jadwal = () => {
+const Jadwal = ({ username }) => {
   const [pengajuan, setPengajuan] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPengajuan = async (user) => {
+  const fetchPengajuan = async (nama) => {
     try {
-      // Ganti URL sesuai alamat API NestJS mu
-      const response = await fetch(`/api/pengajuan?nama=${encodeURIComponent(user.displayName)}`);
+      const response = await fetch(`/api/pengajuan?nama=${encodeURIComponent(nama)}`);
       if (!response.ok) throw new Error('Failed to fetch data');
       const data = await response.json();
 
-      // Map data supaya sesuai struktur frontend
       const mappedData = data.map(item => ({
         id: item.id,
         nama: item.nama,
@@ -38,22 +35,14 @@ const Jadwal = () => {
     }
   };
 
-  // Fungsi kirim ke Google Calendar sama seperti sebelumnya
-
   useEffect(() => {
-    const auth = getAuth();
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchPengajuan(user);
-      } else {
-        setPengajuan([]);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    if (!username) {
+      setPengajuan([]);
+      setLoading(false);
+      return;
+    }
+    fetchPengajuan(username);
+  }, [username]);
 
   if (loading) {
     return (
@@ -110,15 +99,15 @@ const Jadwal = () => {
                     href={item.berkas}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounde mr-4 text-blue-500 underline hover:text-blue-700"
+                    className="rounded mr-4 text-blue-500 underline hover:text-blue-700"
                   >
                     Unduh Berkas
                   </a>
                 )}
 
                 {item.status === 'disetujui' &&
-                  item.tanggal_sidang &&
-                  item.waktu_sidang && (
+                  item.tanggal_sidang !== 'Belum dijadwalkan' &&
+                  item.waktu_sidang !== 'Belum dijadwalkan' && (
                     <a
                       href="#"
                       onClick={(e) => {
@@ -143,8 +132,8 @@ const Jadwal = () => {
                     item.status === 'disetujui'
                       ? 'text-green-500'
                       : item.status === 'ditolak'
-                        ? 'text-red-500'
-                        : 'text-gray-500'
+                      ? 'text-red-500'
+                      : 'text-gray-500'
                   }`}
                 >
                   <b>Status: {item.status}</b>

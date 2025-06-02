@@ -1,14 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { auth, db } from '@/config/firebase';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,58 +15,69 @@ export const SignUp = () => {
   const router = useRouter();
 
   const handleSignUp = async (e) => {
-  e.preventDefault();
-  setError('');
+    e.preventDefault();
+    setError('');
 
-  if (!name || !email || !password || !confirmPassword) {
-    setError('All fields are required.');
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    setError('Passwords do not match.');
-    return;
-  }
-
-  try {
-    const res = await fetch('http://localhost:3001/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        confirmPassword,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.message || 'Failed to register');
+    if (!name || !email || !password || !confirmPassword) {
+      setError('All fields are required.');
       return;
     }
 
-    Swal.fire({
-      title: 'Berhasil membuat akun',
-      customClass: {
-        confirmButton:
-          'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
-      },
-    });
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
-    router.push('/');
-  } catch (err) {
-    console.error(err);
+    try {
+      const res = await fetch('http://localhost:3001/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          confirmPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Failed to register');
+        return;
+      }
+
+      Swal.fire({
+        title: 'Berhasil membuat akun',
+        customClass: {
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+        },
+      });
+
+      router.push('/');
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: 'Coba lagi',
+        customClass: {
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+        },
+      });
+    }
+  };
+
+  const handleGoogleSignUp = () => {
+    // Fungsi sementara untuk mencegah error saat build
+    console.log('Google sign up clicked');
     Swal.fire({
-      title: 'Coba lagi',
-      customClass: {
-        confirmButton:
-          'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
-      },
+      title: 'Fitur belum tersedia',
+      text: 'Google Sign-Up belum diimplementasikan.',
+      icon: 'info',
+      confirmButtonText: 'OK',
     });
-  }
-};
+  };
 
   return (
     <div className="bg-gray flex min-h-screen w-screen items-center justify-center space-x-32 px-16">

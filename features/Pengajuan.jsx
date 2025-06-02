@@ -1,8 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { db, auth } from '@/config/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import Swal from 'sweetalert2';
 
 export const PengajuanForm = () => {
@@ -12,66 +9,36 @@ export const PengajuanForm = () => {
     file: null,
     name: '',
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusPengajuan, setStatusPengajuan] = useState('');
+  const [user, setUser] = useState(null); // Gantikan dengan context user sebenarnya
 
+  // Simulasi user login, ganti ini dengan context atau global state user
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const savedFormData = localStorage.getItem('formData');
-        let parsedData = null;
-        if (savedFormData && savedFormData !== 'undefined' && savedFormData !== 'null') {
-          try {
-            parsedData = JSON.parse(savedFormData);
-          } catch {
-            parsedData = null;
-          }
-        }
-
-        try {
-          const pengajuanDoc = await getDoc(doc(db, 'pengajuan_sidang', user.uid));
-          if (pengajuanDoc.exists()) {
-            const data = pengajuanDoc.data();
-            setStatusPengajuan(data.status);
-          } else {
-            setStatusPengajuan('');
-          }
-        } catch (error) {
-          console.error('Error fetching status pengajuan:', error);
-          setStatusPengajuan('');
-        }
-
-        setFormData({
-          nim: parsedData?.nim || '',
-          title: parsedData?.title || '',
-          file: null,
-          name: user.displayName || '',
-        });
-      } else {
-        setFormData({
-          nim: '',
-          title: '',
-          file: null,
-          name: '',
-        });
-        setStatusPengajuan('');
-        localStorage.removeItem('formData');
-      }
-    });
-
-    return () => unsubscribe();
+    // Misal user sudah login dan ada di localStorage atau context
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser);
+      setFormData((prev) => ({ ...prev, name: storedUser.name || '' }));
+      // Fetch status pengajuan dari backend jika perlu
+      fetch(`/api/pengajuan/status?userId=${storedUser.id}`)
+        .then((res) => res.json())
+        .then((data) => setStatusPengajuan(data.status || ''))
+        .catch(() => setStatusPengajuan(''));
+    } else {
+      setUser(null);
+      setFormData({ nim: '', title: '', file: null, name: '' });
+      setStatusPengajuan('');
+    }
   }, []);
 
   useEffect(() => {
     const { nim, title, name } = formData;
-    const saveData = { nim, title, name };
-    localStorage.setItem('formData', JSON.stringify(saveData));
+    localStorage.setItem('formData', JSON.stringify({ nim, title, name }));
   }, [formData.nim, formData.title, formData.name]);
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-
     if (type === 'file') {
       const file = files[0];
       if (file && file.size > 2 * 1024 * 1024) {
@@ -80,7 +47,8 @@ export const PengajuanForm = () => {
           text: 'Ukuran file tidak boleh lebih dari 2MB.',
           icon: 'error',
           customClass: {
-            confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+            confirmButton:
+              'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
           },
         });
         e.target.value = '';
@@ -101,11 +69,13 @@ export const PengajuanForm = () => {
     formDataUpload.append('upload_preset', uploadPreset);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-        method: 'POST',
-        body: formDataUpload,
-      });
-
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
+        {
+          method: 'POST',
+          body: formDataUpload,
+        }
+      );
       const data = await response.json();
       if (response.ok) return data.secure_url;
       throw new Error(data.error?.message || 'Unknown error');
@@ -117,12 +87,12 @@ export const PengajuanForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const user = auth.currentUser;
     if (!user) {
       Swal.fire({
         title: 'Harap login terlebih dahulu.',
         customClass: {
-          confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
         },
       });
       return;
@@ -134,7 +104,8 @@ export const PengajuanForm = () => {
         text: 'Pengajuan Anda telah disetujui, tidak dapat diperbarui.',
         icon: 'error',
         customClass: {
-          confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
         },
       });
       return;
@@ -146,7 +117,8 @@ export const PengajuanForm = () => {
         text: 'Semua data wajib diisi!',
         icon: 'error',
         customClass: {
-          confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
         },
       });
       return;
@@ -158,7 +130,8 @@ export const PengajuanForm = () => {
         text: 'NIM harus 10 karakter!',
         icon: 'error',
         customClass: {
-          confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
+          confirmButton:
+            'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
         },
       });
       return;
@@ -167,36 +140,25 @@ export const PengajuanForm = () => {
     setIsSubmitting(true);
 
     try {
-      let fileUrl = '';
-      if (formData.file) {
-        fileUrl = await uploadToCloudinary(formData.file);
-        if (!fileUrl) {
-          Swal.fire({
-            title: 'Terjadi kesalahan!',
-            text: 'Gagal mengupload file ke Cloudinary.',
-            icon: 'error',
-            customClass: {
-              confirmButton: 'bg-gray-900 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-gray-500',
-            },
-          });
-          setIsSubmitting(false);
-          return;
-        }
+      const fileUrl = await uploadToCloudinary(formData.file);
+
+      // Kirim data ke backend NestJS (pastikan API endpoint benar dan menerima data JSON)
+      const response = await fetch('/api/pengajuan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id, // kirim userId juga ke backend
+          nim: formData.nim,
+          title: formData.title,
+          name: formData.name,
+          berkasUrl: fileUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Gagal mengajukan');
       }
-
-      const pengajuanData = {
-        id: user.uid,
-        nama: formData.name,
-        nim: formData.nim,
-        judul_skripsi: formData.title,
-        tanggal_pengajuan: new Date().toISOString(),
-        tanggal_sidang: '',
-        waktu_sidang: '',
-        status: 'menunggu persetujuan',
-        berkas: fileUrl,
-      };
-
-      await setDoc(doc(db, 'pengajuan_sidang', user.uid), pengajuanData);
 
       Swal.fire({
         title: 'Pengajuan berhasil!',
@@ -206,7 +168,8 @@ export const PengajuanForm = () => {
           popup: 'bg-green-100 text-black',
           title: 'text-3xl font-semibold text-green-600',
           content: 'text-lg text-gray-700',
-          confirmButton: 'bg-green-500 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-green-600',
+          confirmButton:
+            'bg-green-500 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-green-600',
         },
       });
 
@@ -215,23 +178,24 @@ export const PengajuanForm = () => {
         nim: '',
         title: '',
         file: null,
-        name: user.displayName || '',
+        name: user.name || '',
       });
       setStatusPengajuan('menunggu persetujuan');
-      setIsSubmitting(false);
     } catch (err) {
       Swal.fire({
         title: 'Terjadi kesalahan!',
-        text: 'Terjadi kesalahan saat mengajukan.',
+        text: err.message || 'Terjadi kesalahan saat mengajukan.',
         icon: 'error',
         customClass: {
           popup: 'bg-red-100 text-black',
           title: 'text-3xl font-semibold text-red-600',
           content: 'text-lg text-gray-700',
-          confirmButton: 'bg-red-500 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-red-600',
+          confirmButton:
+            'bg-red-500 text-white px-6 py-1 font-semibold rounded-md shadow-md hover:bg-red-600',
         },
       });
       console.error('Error pengajuan:', err);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -283,21 +247,27 @@ export const PengajuanForm = () => {
               <input
                 type="file"
                 name="file"
-                accept="application/pdf,image/*"
                 onChange={handleChange}
-                className="block w-full text-sm text-black file:mr-4 file:rounded-md file:border-0 file:bg-gray-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-gray-700"
+                accept="application/pdf,image/*"
+                className="shadow-b w-full rounded border border-gray-300 bg-gray-100 p-2 text-black shadow-sm"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded bg-gray-900 px-4 py-2 font-bold text-white shadow-md hover:bg-gray-700 disabled:opacity-60"
+              className={`w-full rounded bg-gray-900 px-6 py-2 font-semibold text-white shadow-md hover:bg-gray-500 ${
+                isSubmitting ? 'cursor-not-allowed opacity-50' : ''
+              }`}
             >
-              {isSubmitting ? 'Mengirim...' : 'Ajukan Sidang'}
+              {isSubmitting ? 'Mengirim...' : 'Ajukan'}
             </button>
           </div>
         </form>
+
+        <p className="text-md mt-8 text-center font-bold">
+          Status Pengajuan: <span className="text-green-600">{statusPengajuan || 'Belum ada pengajuan'}</span>
+        </p>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { currentUser, logoutUser } = useUser();
+  const { currentUser, logout } = useUser();
 
   useEffect(() => {
     const handleResize = () => {
@@ -38,7 +38,7 @@ const Navbar = () => {
             credentials: 'include',
           });
 
-          logoutUser();
+          logout();
 
           Swal.fire('Logout', 'Anda berhasil keluar.', 'success').then(() => {
             window.location.href = '/login';
