@@ -1,12 +1,12 @@
-# 📚 Sistem Informasi Jadwal Sidang Skripsi – Front-end Mahasiswa (Kelompok 11)
+# Sistem Informasi Jadwal Sidang Skripsi – Front-end Mahasiswa (Kelompok 11)
 
 Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mahasiswa dalam melakukan **pengajuan jadwal sidang skripsi secara online** dan melihat jadwal sidang setelah disetujui oleh admin.
 
 ---
 
-## 🚀 Fitur Utama Mahasiswa
+## Fitur Utama Mahasiswa
 
-### ✅ Halaman Utama
+### Halaman Utama
 - Menampilkan informasi umum:
   - Panduan pengajuan sidang
   - Persyaratan berkas
@@ -17,7 +17,7 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 
 ---
 
-### ✅ Form Pengajuan Sidang
+### Form Pengajuan Sidang
 - Field input:
   - Nama mahasiswa (auto dari login, jika ada)
   - NIM
@@ -32,7 +32,7 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 
 ---
 
-### ✅ Jadwal Sidang Saya
+### Jadwal Sidang Saya
 - Menampilkan data sidang yang telah disetujui:
 - Nama mahasiswa
 - NIM
@@ -46,9 +46,9 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 
 ---
 
-## 🧩 Integrasi Back-end (NestJS + Prisma)
+## Integrasi Back-end (NestJS + Prisma)
 
-### 📂 Struktur Data Prisma
+### Struktur Data Prisma
 
 #### `pengajuan_sidang`
 | Kolom             | Tipe                     |
@@ -80,7 +80,7 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 ---
 
 ## 🛠️ Teknologi yang Digunakan
-- Front-end: [React/Next.js/Angular/etc.]
+- Front-end: Next.js
 - Back-end: NestJS
 - ORM: Prisma
 - Database: MySQL
