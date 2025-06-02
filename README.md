@@ -89,4 +89,4 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 ---
 
 ## How to Access
-follow this link: pengajuan-sidang.vercel.app
+follow this link: http://pengajuan-sidang.vercel.app
