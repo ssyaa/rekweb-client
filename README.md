@@ -79,9 +79,14 @@ Proyek ini merupakan bagian dari sistem informasi berbasis web yang membantu mah
 
 ---
 
-## 🛠️ Teknologi yang Digunakan
+## Teknologi yang Digunakan
 - Front-end: Next.js
 - Back-end: NestJS
 - ORM: Prisma
 - Database: MySQL
 - Autentikasi (opsional): JWT / Session
+
+---
+
+## How to Access
+follow this link: pengajuan-sidang.vercel.app
