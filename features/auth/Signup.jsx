@@ -29,7 +29,7 @@ export const SignUp = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3001/auth/register', {
+      const res = await fetch('http://localhost:3001/auth/register/mahasiswa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

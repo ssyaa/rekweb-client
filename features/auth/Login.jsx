@@ -8,9 +8,8 @@ import Swal from 'sweetalert2';
 import { useUser } from '@/contexts/UserContext';
 
 export const SignIn = () => {
-  const [email, setEmail] = useState('');
+  const [nim, setNim] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const router = useRouter();
 
   const { setCurrentUser } = useUser();
@@ -19,12 +18,12 @@ export const SignIn = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:3001/auth/login', {
+      const res = await fetch('http://localhost:3001/auth/login/mahasiswa', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ nim, password }),
       });
 
       if (!res.ok) {
@@ -32,7 +31,7 @@ export const SignIn = () => {
         throw new Error(err.message || 'Gagal login');
       }
 
-      const data = await res.json(); // misalnya { token, user }
+      const data = await res.json(); // misal { token, user }
       localStorage.setItem('token', data.token);
       localStorage.setItem('currentUser', JSON.stringify(data.user));
       setCurrentUser(data.user);
@@ -86,12 +85,12 @@ export const SignIn = () => {
 
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="flex flex-col gap-2">
-              <label>Email</label>
+              <label>NIM</label>
               <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="Masukkan NIM"
+                value={nim}
+                onChange={(e) => setNim(e.target.value)}
                 className="w-full rounded border p-3"
                 required
               />
@@ -100,14 +99,13 @@ export const SignIn = () => {
               <label>Password</label>
               <input
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded border p-3"
                 required
               />
             </div>
-            {error && <p className="text-red-500">{error}</p>}
 
             <button
               type="submit"
