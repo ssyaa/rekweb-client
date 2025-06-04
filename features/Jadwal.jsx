@@ -1,54 +1,92 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useUser } from '../contexts/UserContext'; // Sesuaikan path UserContext-mu
 
-const Jadwal = ({ username }) => {
+const Jadwal = () => {
+  const { currentUser } = useUser();
   const [pengajuan, setPengajuan] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchPengajuan = async (nama) => {
+  const kirimKeGoogleCalendar = ({ nama, tanggal_sidang, waktu_sidang, judul_skripsi }) => {
+    const pad = (num) => String(num).padStart(2, '0');
+
+    const parseDateTime = (tanggal, waktu) => {
+      const [year, month, day] = tanggal.split('-');
+      const [hour, minute] = waktu.split(':');
+      return `${year}${month}${day}T${pad(hour)}${pad(minute)}00Z`;
+    };
+
+    const startDate = parseDateTime(tanggal_sidang, waktu_sidang);
+    const startDateObj = new Date(`${tanggal_sidang}T${waktu_sidang}:00Z`);
+    const endDateObj = new Date(startDateObj.getTime() + 60 * 60 * 1000);
+    const endDate = `${endDateObj.getUTCFullYear()}${pad(endDateObj.getUTCMonth() + 1)}${pad(endDateObj.getUTCDate())}T${pad(endDateObj.getUTCHours())}${pad(endDateObj.getUTCMinutes())}00Z`;
+
+    const url = `https://calendar.google.com/calendar/r/eventedit?text=Sidang Skripsi - ${encodeURIComponent(
+      judul_skripsi
+    )}&dates=${startDate}/${endDate}&details=Sidang Skripsi oleh ${encodeURIComponent(nama)}`;
+
+    window.open(url, '_blank');
+  };
+
+  const fetchPengajuan = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`/api/pengajuan?nama=${encodeURIComponent(nama)}`);
-      if (!response.ok) throw new Error('Failed to fetch data');
+      const response = await fetch('http://localhost:3001/pengajuan');
+      if (!response.ok) throw new Error('Gagal mengambil data pengajuan');
       const data = await response.json();
 
-      const mappedData = data.map(item => ({
-        id: item.id,
-        nama: item.nama,
-        nim: item.nim,
-        judul_skripsi: item.judul_skripsi || 'Belum tersedia',
-        status: item.status,
-        alasan: item.alasan,
-        berkas: item.berkas,
-        tanggal_sidang: item.jadwal?.tanggal_sidang
-          ? new Date(item.jadwal.tanggal_sidang).toISOString().split('T')[0]
-          : 'Belum dijadwalkan',
-        waktu_sidang: item.jadwal?.waktu_sidang || 'Belum dijadwalkan',
-        dosen_1: item.jadwal?.dosen_1 || 'Belum ditentukan',
-        dosen_2: item.jadwal?.dosen_2 || 'Belum ditentukan',
-      }));
+      const mappedData = data
+        .filter(item => item.mahasiswa?.nim === currentUser?.nim)
+        .map(item => ({
+          id: item.id,
+          nama: item.mahasiswa?.nama || 'Tidak diketahui',
+          nim: item.mahasiswa?.nim || '-',
+          judulSkripsi: item.judulSkripsi || 'Belum tersedia',
+          status: (item.status || '').toLowerCase(),
+          alasanPenolakan: item.alasanPenolakan || null,
+          berkasUrl: item.berkasUrl || null,
+          tanggal: item.jadwalSidang?.tanggal
+            ? new Date(item.jadwalSidang.tanggal).toISOString().split('T')[0]
+            : 'Belum dijadwalkan',
+          waktu: item.jadwalSidang?.waktu || 'Belum dijadwalkan',
+          dosenPenguji1Id: item.jadwalSidang?.dosenPenguji1?.nama || 'Belum ditentukan',
+          dosenPenguji2Id: item.jadwalSidang?.dosenPenguji2?.nama || 'Belum ditentukan',
+        }));
 
       setPengajuan(mappedData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      setError(err.message || 'Terjadi kesalahan');
+      setPengajuan([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!username) {
+    if (!currentUser) {
       setPengajuan([]);
       setLoading(false);
       return;
     }
-    fetchPengajuan(username);
-  }, [username]);
+    fetchPengajuan();
+  }, [currentUser]);
+
 
   if (loading) {
     return (
       <div className="bg-gray flex min-h-screen flex-col items-center justify-center">
         <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-gray-500"></div>
         <p className="text-lg text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-red-100 p-6">
+        <p className="text-red-600 text-lg font-semibold">Error: {error}</p>
       </div>
     );
   }
@@ -73,56 +111,49 @@ const Jadwal = ({ username }) => {
                 <span className="font-semibold">NIM:</span> {item.nim}
               </div>
               <div className="text-md mb-2">
-                <span className="font-semibold">Judul Skripsi:</span>{' '}
-                {item.judul_skripsi || 'Belum tersedia'}
+                <span className="font-semibold">Judul Skripsi:</span> {item.judulSkripsi}
               </div>
               <div className="text-md mb-2">
-                <span className="font-semibold">Tanggal Sidang:</span>{' '}
-                {item.tanggal_sidang || 'Belum dijadwalkan'}
+                <span className="font-semibold">Tanggal Sidang:</span> {item.tanggal}
               </div>
               <div className="text-md mb-2">
-                <span className="font-semibold">Waktu Sidang:</span>{' '}
-                {item.waktu_sidang || 'Belum dijadwalkan'}
+                <span className="font-semibold">Waktu Sidang:</span> {item.waktu}
               </div>
               <div className="text-md mb-2">
-                <span className="font-semibold">Dosen Penguji 1:</span>{' '}
-                {item.dosen_1 || 'Belum ditentukan'}
+                <span className="font-semibold">Dosen Penguji 1:</span> {item.dosenPenguji1Id}
               </div>
               <div className="text-md mb-2">
-                <span className="font-semibold">Dosen Penguji 2:</span>{' '}
-                {item.dosen_2 || 'Belum ditentukan'}
+                <span className="font-semibold">Dosen Penguji 2:</span> {item.dosenPenguji2Id}
               </div>
 
               <div className="mt-4 flex items-center">
-                {item.berkas && (
+                {item.berkasUrl && (
                   <a
-                    href={item.berkas}
+                    href={item.berkasUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded mr-4 text-blue-500 underline hover:text-blue-700"
+                    className="mr-4 rounded text-blue-500 underline hover:text-blue-700"
                   >
                     Unduh Berkas
                   </a>
                 )}
 
                 {item.status === 'disetujui' &&
-                  item.tanggal_sidang !== 'Belum dijadwalkan' &&
-                  item.waktu_sidang !== 'Belum dijadwalkan' && (
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
+                  item.tanggal !== 'Belum dijadwalkan' &&
+                  item.waktu !== 'Belum dijadwalkan' && (
+                    <button
+                      onClick={() =>
                         kirimKeGoogleCalendar({
                           nama: item.nama,
-                          tanggal_sidang: item.tanggal_sidang,
-                          waktu_sidang: item.waktu_sidang,
-                          judul_skripsi: item.judul_skripsi,
-                        });
-                      }}
+                          tanggal_sidang: item.tanggal,
+                          waktu_sidang: item.waktu,
+                          judul_skripsi: item.judulSkripsi,
+                        })
+                      }
                       className="text-blue-500 underline hover:text-blue-700"
                     >
                       Tambah ke Google Calendar
-                    </a>
+                    </button>
                   )}
               </div>
 
@@ -139,9 +170,9 @@ const Jadwal = ({ username }) => {
                   <b>Status: {item.status}</b>
                 </p>
 
-                {item.status === 'ditolak' && item.alasan && (
+                {item.status === 'ditolak' && item.alasanPenolakan && (
                   <p className="text-md mt-4 text-red-500">
-                    <b>Alasan Penolakan:</b> {item.alasan}
+                    <b>Alasan Penolakan:</b> {item.alasanPenolakan}
                   </p>
                 )}
               </div>

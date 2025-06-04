@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Swal from 'sweetalert2';
 
 export const SignUp = () => {
-  const [name, setName] = useState('');
+  const [nama, setnama] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,7 +18,7 @@ export const SignUp = () => {
     e.preventDefault();
     setError('');
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!nama || !email || !password || !confirmPassword) {
       setError('All fields are required.');
       return;
     }
@@ -29,11 +29,11 @@ export const SignUp = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3001/auth/register/mahasiswa', {
+      const res = await fetch('http://localhost:3001/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
+          nama,
           email,
           password,
           confirmPassword,
@@ -80,82 +80,82 @@ export const SignUp = () => {
   };
 
   return (
-    <div className="bg-gray flex min-h-screen w-screen items-center justify-center space-x-32 px-16">
+    <div classnama="bg-gray flex min-h-screen w-screen items-center justify-center space-x-32 px-16">
       {/* Bagian Konten */}
-      <div className="flex w-full flex-col px-8 md:w-[40%]">
-        <div className="py-4 text-black">
-          <h1 className="mb-2 text-center text-3xl font-bold">Welcome</h1>
-          <p className="mb-6 text-center">
+      <div classnama="flex w-full flex-col px-8 md:w-[40%]">
+        <div classnama="py-4 text-black">
+          <h1 classnama="mb-2 text-center text-3xl font-bold">Welcome</h1>
+          <p classnama="mb-6 text-center">
             Please fill in your details to create a new account.
           </p>
 
-          <form onSubmit={handleSignUp} className="space-y-3">
-            <div className="flex flex-col gap-2">
-              <label>Name</label>
+          <form onSubmit={handleSignUp} classnama="space-y-3">
+            <div classnama="flex flex-col gap-2">
+              <label>nama</label>
               <input
                 type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded border p-3"
+                placeholder="Enter your nama"
+                value={nama}
+                onChange={(e) => setnama(e.target.value)}
+                classnama="w-full rounded border p-3"
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div classnama="flex flex-col gap-2">
               <label>Email</label>
               <input
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded border p-3"
+                classnama="w-full rounded border p-3"
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div classnama="flex flex-col gap-2">
               <label>Password</label>
               <input
                 type="password"
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border p-3"
+                classnama="w-full rounded border p-3"
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div classnama="flex flex-col gap-2">
               <label>Confirm Password</label>
               <input
                 type="password"
                 placeholder="Re-enter your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded border p-3"
+                classnama="w-full rounded border p-3"
                 required
               />
             </div>
 
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p classnama="text-red-500">{error}</p>}
             <button
               type="submit"
-              className="w-full rounded bg-black p-2 text-white"
+              classnama="w-full rounded bg-black p-2 text-white"
             >
               Sign Up
             </button>
           </form>
 
-          <div className="mt-4 flex items-center">
-            <hr className="flex-grow border-gray-300" />
-            <span className="px-4 text-gray-500">or</span>
-            <hr className="flex-grow border-gray-300" />
+          <div classnama="mt-4 flex items-center">
+            <hr classnama="flex-grow border-gray-300" />
+            <span classnama="px-4 text-gray-500">or</span>
+            <hr classnama="flex-grow border-gray-300" />
           </div>
 
           <button
             onClick={handleGoogleSignUp}
-            className="mt-4 flex w-full items-center justify-center rounded border border-gray-300 p-2"
+            classnama="mt-4 flex w-full items-center justify-center rounded border border-gray-300 p-2"
           >
             <Image
-              className="px-2"
+              classnama="px-2"
               src="/Google.png"
               alt="Google icon"
               width={38}
@@ -165,9 +165,9 @@ export const SignUp = () => {
             Sign Up with Google
           </button>
 
-          <p className="mt-4 text-center">
+          <p classnama="mt-4 text-center">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-500">
+            <Link href="/login" classnama="text-blue-500">
               Sign In
             </Link>
           </p>
@@ -175,15 +175,15 @@ export const SignUp = () => {
       </div>
 
       {/* Bagian Gambar */}
-      <div className="hidden text-center md:block">
+      <div classnama="hidden text-center md:block">
         <Image
           src="/sidang.png"
           alt="signup"
           width={350}
           height={100}
-          className="mx-auto block rounded-sm"
+          classnama="mx-auto block rounded-sm"
         />
-        <p className="text-lg font-bold">
+        <p classnama="text-lg font-bold">
           Daftar untuk Mengatur Jadwal Sidang Skripsi!
         </p>
       </div>
