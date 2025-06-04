@@ -68,8 +68,14 @@ const Navbar = () => {
 
         <div className="hidden items-center space-x-8 text-sm md:flex">
           <Link href="/" className="hover:text-red-700">Home</Link>
-          <Link href="/pengajuan" className="hover:text-red-700">Ajukan Sidang</Link>
-          <Link href="/jadwal" className="hover:text-red-700">Jadwal Sidang Saya</Link>
+
+
+          {currentUser && (
+            <>
+              <Link href="/pengajuan" className="hover:text-red-700">Ajukan Sidang</Link>
+              <Link href="/jadwal" className="hover:text-red-700">Jadwal Sidang Saya</Link>
+            </>
+          )}
 
           {currentUser ? (
             <button
@@ -104,8 +110,14 @@ const Navbar = () => {
         }`}
       >
         <Link href="/" className="block font-medium text-gray-700 hover:text-red-700">Home</Link>
-        <Link href="/pengajuan" className="block font-medium text-gray-700 hover:text-red-700">Ajukan Sidang</Link>
-        <Link href="/jadwal" className="block font-medium text-gray-700 hover:text-red-700">Jadwal Sidang Saya</Link>
+
+        {currentUser && (
+          <>
+            <Link href="/pengajuan" className="hover:text-red-700">Ajukan Sidang</Link>
+            <Link href="/jadwal" className="hover:text-red-700">Jadwal Sidang Saya</Link>
+          </>
+        )}
+
         <div className="py-2">
           {currentUser ? (
             <button

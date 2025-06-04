@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 import { useUser } from '@/contexts/UserContext';
 
 export const SignIn = () => {
-  const [nim, setNim] = useState('');
+  const [email, setemail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
 
@@ -18,12 +18,12 @@ export const SignIn = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:3001/auth/login/mahasiswa', {
+      const res = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nim, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
@@ -85,12 +85,12 @@ export const SignIn = () => {
 
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="flex flex-col gap-2">
-              <label>NIM</label>
+              <label>Email</label>
               <input
                 type="text"
-                placeholder="Masukkan NIM"
-                value={nim}
-                onChange={(e) => setNim(e.target.value)}
+                placeholder="Masukkan email"
+                value={email}
+                onChange={(e) => setemail(e.target.value)}
                 className="w-full rounded border p-3"
                 required
               />
