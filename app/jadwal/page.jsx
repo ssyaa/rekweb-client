@@ -1,4 +1,4 @@
-import Jadwal from '@/features/Jadwal';
+import Jadwal from '../../features/Jadwal';
 
 export default function JadwalPage() {
   return <Jadwal />;
