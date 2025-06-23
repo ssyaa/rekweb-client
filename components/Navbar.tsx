@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
-import { useUser } from '@/contexts/UserContext';
+import { useUser } from '../contexts/UserContext';
 
-const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { currentUser, logout } = useUser();
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const { user, logout } = useUser();
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,7 +33,7 @@ const Navbar = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await fetch('http://localhost:3001/auth/logout', {
+          await fetch('http://localhost:3002/auth/logout', {
             method: 'POST',
             credentials: 'include',
           });
@@ -69,15 +69,14 @@ const Navbar = () => {
         <div className="hidden items-center space-x-8 text-sm md:flex">
           <Link href="/" className="hover:text-red-700">Home</Link>
 
-
-          {currentUser && (
+          {user && (
             <>
               <Link href="/pengajuan" className="hover:text-red-700">Ajukan Sidang</Link>
               <Link href="/jadwal" className="hover:text-red-700">Jadwal Sidang Saya</Link>
             </>
           )}
 
-          {currentUser ? (
+          {user ? (
             <button
               onClick={handleLogout}
               className="rounded-md bg-black px-6 py-1 font-semibold text-white shadow-md hover:bg-red-900"
@@ -111,7 +110,7 @@ const Navbar = () => {
       >
         <Link href="/" className="block font-medium text-gray-700 hover:text-red-700">Home</Link>
 
-        {currentUser && (
+        {user && (
           <>
             <Link href="/pengajuan" className="hover:text-red-700">Ajukan Sidang</Link>
             <Link href="/jadwal" className="hover:text-red-700">Jadwal Sidang Saya</Link>
@@ -119,7 +118,7 @@ const Navbar = () => {
         )}
 
         <div className="py-2">
-          {currentUser ? (
+          {user ? (
             <button
               onClick={handleLogout}
               className="w-full rounded-lg bg-gray-900 px-4 py-2 font-bold text-white hover:bg-gray-500"

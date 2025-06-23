@@ -1,5 +1,5 @@
-import { PengajuanForm } from '@/features/Pengajuan';
+import { SubmissionForm } from '../../features/Pengajuan';
 
-export default function SubmissionPage() {
-  return <PengajuanForm />;
+export default function Page() {
+  return <SubmissionForm />;
 }
