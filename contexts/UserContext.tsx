@@ -14,7 +14,11 @@ type User = {
   email: string;
   name: string;
   role: string;
+  student?: {
+    id: string;
+  };
 };
+
 
 type AuthContextType = {
   user: User | null;

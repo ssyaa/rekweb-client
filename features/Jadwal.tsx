@@ -5,7 +5,7 @@ import { useUser } from '../contexts/UserContext';
 import React from 'react';
 
 interface SubmissionItem {
-  id: number;
+  id: string;
   name: string;
   nim: string;
   thesis_title: string;
@@ -19,56 +19,59 @@ interface SubmissionItem {
 }
 
 const Jadwal = () => {
-  const { user } = useUser();
-  const [submission, setSubmission] = useState<SubmissionItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+    const { user } = useUser();
+    const [submission, setSubmission] = useState<SubmissionItem[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-  const fetchSubmission = async () => {
-    setLoading(true);
-    setError(null);
+    const fetchSubmission = async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch('http://localhost:3002/auth/me', {
-        credentials: 'include',
-      });
+      try {
+        const response = await fetch('http://localhost:3002/auth/me', {
+          credentials: 'include',
+        });
 
-      if (!response.ok) throw new Error('Gagal mengambil data user');
+        if (!response.ok) throw new Error('Gagal mengambil data user');
 
-      const result = await response.json();
-      const user = result.user;
+        const result = await response.json();
+        const user = result.user;
 
-      const submission = user.student?.thesis_submission?.[0];
+        console.log(user.student?.thesis_submission);
+        const submissions = user.student?.thesis_submission || [];
 
-      if (!submission) {
+        if (submissions.length === 0) {
+          setSubmission([]);
+          return;
+        }
+
+        const mapped: SubmissionItem[] = submissions.map((submission: any) => ({
+          id: submission.id,
+          name: user.student.name,
+          nim: user.student.nim,
+          thesis_title: submission.thesis_title,
+          status: submission.status.toLowerCase(),
+          reason_rejected: submission.reason_rejected,
+          file_url: submission.file_url,
+          date: submission.date
+            ? new Date(submission.date).toISOString().split('T')[0]
+            : 'Belum dijadwalkan',
+          time: submission.time || 'Belum dijadwalkan',
+          examiner_1_id: submission.examiner_1?.name || 'Belum ditentukan',
+          examiner_2_id: submission.examiner_2?.name || 'Belum ditentukan',
+        }));
+
+        setSubmission(mapped);
+      } catch (err: any) {
+        console.error('Error fetching submission:', err);
+        setError(err.message || 'Terjadi kesalahan');
         setSubmission([]);
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const mapped: SubmissionItem = {
-        id: submission.id,
-        name: user.student.name,
-        nim: user.student.nim,
-        thesis_title: submission.thesis_title,
-        status: submission.status.toLowerCase(),
-        reason_rejected: submission.reason_rejected,
-        file_url: submission.file_url,
-        date: submission.date
-          ? new Date(submission.date).toISOString().split('T')[0]
-          : 'Belum dijadwalkan',
-        time: submission.time || 'Belum dijadwalkan',
-        examiner_1_id: submission.examiner_1?.name || 'Belum ditentukan',
-        examiner_2_id: submission.examiner_2?.name || 'Belum ditentukan',
-      };
-
-      setSubmission([mapped]);
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan');
-      setSubmission([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (!user) {

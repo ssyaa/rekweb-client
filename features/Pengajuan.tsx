@@ -3,13 +3,7 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
-
-type User = {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-};
+import { useUser } from '../contexts/UserContext'; // ⬅️ pastikan path-nya sesuai
 
 type FormDataType = {
   nim: string;
@@ -20,11 +14,9 @@ type FormDataType = {
 
 export const SubmissionForm = () => {
   const router = useRouter();
+  const { user, loading, checkAuth } = useUser();
 
-  const [localUser, setLocalUser] = useState<User | null>(null);
   const [localSubmissionStatus, setLocalSubmissionStatus] = useState('');
-  const [loadingUser, setLoadingUser] = useState(true);
-
   const [formData, setFormData] = useState<FormDataType>({
     nim: '',
     thesis_title: '',
@@ -35,41 +27,34 @@ export const SubmissionForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
-  // ⬇️ Pindahkan keluar agar bisa dipanggil ulang
-  const fetchAuthMe = async () => {
-    setLoadingUser(true);
+  const fetchSubmissionStatus = async () => {
+    if (!user) return;
     try {
-      const res = await fetch('http://localhost:3002/auth/me', {
+      const res = await fetch(`http://localhost:3002/submission/status?id=${user.student?.id}`, {
         method: 'GET',
         credentials: 'include',
       });
-
-      if (!res.ok) throw new Error('Belum login');
       const data = await res.json();
-
-      setLocalUser(data.user);
-      setLocalSubmissionStatus(data.submissionStatus || '');
-    } catch {
-      setLocalUser(null);
+      setLocalSubmissionStatus(data.status || '');
+    } catch (err) {
       setLocalSubmissionStatus('');
-      router.push('/login');
-    } finally {
-      setLoadingUser(false);
     }
   };
 
   useEffect(() => {
-    fetchAuthMe();
-  }, [router]);
+    checkAuth();
+  }, []);
 
   useEffect(() => {
-    if (!loadingUser && localUser) {
-      setFormData((prev) => ({
-        ...prev,
-        name: localUser.name || '',
-      }));
+    if (!loading && user) {
+      if (user.role !== 'MAHASISWA') {
+        router.push('/unauthorized');
+      } else {
+        setFormData((prev) => ({ ...prev, name: user.name || '' }));
+        fetchSubmissionStatus();
+      }
     }
-  }, [localUser, loadingUser]);
+  }, [loading, user]);
 
   useEffect(() => {
     const { nim, thesis_title, name } = formData;
@@ -82,11 +67,7 @@ export const SubmissionForm = () => {
     if (type === 'file') {
       const file = files?.[0];
       if (file && file.size > 2 * 1024 * 1024) {
-        Swal.fire({
-          title: 'File terlalu besar!',
-          text: 'Ukuran file tidak boleh lebih dari 2MB.',
-          icon: 'error',
-        });
+        Swal.fire('File terlalu besar!', 'Ukuran maksimal 2MB.', 'error');
         e.target.value = '';
         return;
       }
@@ -118,34 +99,22 @@ export const SubmissionForm = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!localUser) return;
+    if (!user) return;
 
     const { nim, thesis_title, name, file_url } = formData;
 
     if (localSubmissionStatus === 'MENUNGGU' || localSubmissionStatus === 'DISETUJUI') {
-      Swal.fire({
-        title: 'Tidak dapat mengajukan!',
-        text: 'Pengajuan Anda sedang menunggu atau telah disetujui.',
-        icon: 'error',
-      });
+      Swal.fire('Tidak dapat mengajukan!', 'Pengajuan Anda sedang diproses atau telah disetujui.', 'error');
       return;
     }
 
     if (!nim || !thesis_title || !name || !file_url) {
-      Swal.fire({
-        title: 'Validasi gagal!',
-        text: 'Semua data wajib diisi!',
-        icon: 'error',
-      });
+      Swal.fire('Validasi gagal!', 'Semua data wajib diisi!', 'error');
       return;
     }
 
     if (nim.length !== 10) {
-      Swal.fire({
-        title: 'NIM tidak valid!',
-        text: 'NIM harus terdiri dari 10 karakter.',
-        icon: 'error',
-      });
+      Swal.fire('NIM tidak valid!', 'Harus 10 karakter.', 'error');
       return;
     }
 
@@ -157,10 +126,11 @@ export const SubmissionForm = () => {
       const response = await fetch('http://localhost:3002/submission/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           thesis_title,
           file_url: uploadedUrl,
-          user_id: localUser.id,
+          user_id: user.id,
           nim,
           name,
         }),
@@ -171,29 +141,19 @@ export const SubmissionForm = () => {
         throw new Error(errData.message || 'Gagal mengirim pengajuan.');
       }
 
-      Swal.fire({
-        title: 'Pengajuan Berhasil!',
-        text: 'Pengajuan berhasil dikirim.',
-        icon: 'success',
-      });
+      Swal.fire('Pengajuan Berhasil!', 'Pengajuan berhasil dikirim.', 'success');
 
-      // ⬇️ Refetch auth/me agar status terbaru terupdate
-      await fetchAuthMe();
-
+      await fetchSubmissionStatus();
       localStorage.removeItem('formData');
       setUploadedFileName(null);
       setFormData({
         nim: '',
         thesis_title: '',
         file_url: null,
-        name: localUser.name || '',
+        name: user.name || '',
       });
     } catch (err: any) {
-      Swal.fire({
-        title: 'Terjadi kesalahan!',
-        text: err.message,
-        icon: 'error',
-      });
+      Swal.fire('Terjadi kesalahan!', err.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +165,7 @@ export const SubmissionForm = () => {
     DITOLAK: 'text-red-600',
   }[localSubmissionStatus || ''] || 'text-gray-700';
 
-  if (loadingUser) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>Loading data user...</p>
@@ -286,7 +246,7 @@ export const SubmissionForm = () => {
           </div>
         </form>
 
-        {localUser && (
+        {user && (
           <p className="text-md mt-8 text-center font-bold">
             Status Pengajuan:{' '}
             <span className={`${statusColor}`}>
