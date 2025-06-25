@@ -3,8 +3,9 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
-import { useUser } from '../contexts/UserContext'; // ⬅️ pastikan path-nya sesuai
+import { useUser } from '../contexts/UserContext'; // Ambil data user dari context
 
+// Tipe data untuk form pengajuan
 type FormDataType = {
   nim: string;
   thesis_title: string;
@@ -27,6 +28,7 @@ export const SubmissionForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
+  // Ambil status pengajuan user
   const fetchSubmissionStatus = async () => {
     if (!user) return;
     try {
@@ -41,10 +43,12 @@ export const SubmissionForm = () => {
     }
   };
 
+  // Cek autentikasi saat pertama kali render
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Jika user bukan mahasiswa, redirect
   useEffect(() => {
     if (!loading && user) {
       if (user.role !== 'MAHASISWA') {
@@ -56,11 +60,13 @@ export const SubmissionForm = () => {
     }
   }, [loading, user]);
 
+  // Simpan sementara ke localStorage untuk auto-recovery
   useEffect(() => {
     const { nim, thesis_title, name } = formData;
     localStorage.setItem('formData', JSON.stringify({ nim, thesis_title, name }));
   }, [formData.nim, formData.thesis_title, formData.name]);
 
+  // Handle perubahan input
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, files } = e.target;
 
@@ -79,6 +85,7 @@ export const SubmissionForm = () => {
     }
   };
 
+  // Upload file ke Cloudinary dan kembalikan URL
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
@@ -97,17 +104,20 @@ export const SubmissionForm = () => {
     return data.secure_url;
   };
 
+  // Kirim pengajuan ke backend
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     const { nim, thesis_title, name, file_url } = formData;
 
+    // Cegah pengajuan ulang jika sudah menunggu atau disetujui
     if (localSubmissionStatus === 'MENUNGGU' || localSubmissionStatus === 'DISETUJUI') {
       Swal.fire('Tidak dapat mengajukan!', 'Pengajuan Anda sedang diproses atau telah disetujui.', 'error');
       return;
     }
 
+    // Validasi form
     if (!nim || !thesis_title || !name || !file_url) {
       Swal.fire('Validasi gagal!', 'Semua data wajib diisi!', 'error');
       return;
@@ -121,8 +131,9 @@ export const SubmissionForm = () => {
     setIsSubmitting(true);
 
     try {
-      const uploadedUrl = await uploadToCloudinary(file_url);
+      const uploadedUrl = await uploadToCloudinary(file_url); // Upload file ke Cloudinary
 
+      // Kirim data ke backend
       const response = await fetch('http://localhost:3002/submission/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,9 +154,9 @@ export const SubmissionForm = () => {
 
       Swal.fire('Pengajuan Berhasil!', 'Pengajuan berhasil dikirim.', 'success');
 
-      await fetchSubmissionStatus();
-      localStorage.removeItem('formData');
-      setUploadedFileName(null);
+      await fetchSubmissionStatus(); // Refresh status
+      localStorage.removeItem('formData'); // Hapus local data
+      setUploadedFileName(null); // Reset nama file
       setFormData({
         nim: '',
         thesis_title: '',
@@ -159,12 +170,14 @@ export const SubmissionForm = () => {
     }
   };
 
+  // Warna status pengajuan
   const statusColor = {
     DISETUJUI: 'text-green-600',
     MENUNGGU: 'text-yellow-500',
     DITOLAK: 'text-red-600',
   }[localSubmissionStatus || ''] || 'text-gray-700';
 
+  // Tampilkan loading jika masih ambil data user
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -173,6 +186,7 @@ export const SubmissionForm = () => {
     );
   }
 
+  // Form pengajuan
   return (
     <div className="items-top justify-top bg-gray flex min-h-screen">
       <div className="w-full rounded">
@@ -183,6 +197,7 @@ export const SubmissionForm = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mx-32">
+            {/* Input Nama */}
             <div className="mb-8">
               <label className="mb-2 block font-bold text-black">Nama Mahasiswa</label>
               <input
@@ -194,6 +209,7 @@ export const SubmissionForm = () => {
               />
             </div>
 
+            {/* Input NIM */}
             <div className="mb-8">
               <label className="mb-2 font-bold block text-black">NIM</label>
               <input
@@ -206,6 +222,7 @@ export const SubmissionForm = () => {
               />
             </div>
 
+            {/* Input Judul Skripsi */}
             <div className="mb-8">
               <label className="mb-2 font-bold block text-black">Judul Skripsi</label>
               <input
@@ -218,6 +235,7 @@ export const SubmissionForm = () => {
               />
             </div>
 
+            {/* Upload File */}
             <div className="mb-8">
               <label className="mb-2 font-bold block text-black">Upload Berkas Sidang</label>
               <input
@@ -232,6 +250,7 @@ export const SubmissionForm = () => {
               )}
             </div>
 
+            {/* Tombol Submit */}
             <button
               type="submit"
               disabled={isSubmitting || localSubmissionStatus === 'DISETUJUI'}
@@ -246,6 +265,7 @@ export const SubmissionForm = () => {
           </div>
         </form>
 
+        {/* Tampilkan Status */}
         {user && (
           <p className="text-md mt-8 text-center font-bold">
             Status Pengajuan:{' '}

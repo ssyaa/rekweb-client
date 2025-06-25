@@ -9,17 +9,18 @@ import React, {
 } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Tipe data user yang disimpan di context
 type User = {
   id: string;
   email: string;
   name: string;
   role: string;
   student?: {
-    id: string;
+    id: string; // hanya untuk user role mahasiswa
   };
 };
 
-
+// Tipe untuk context auth (login/logout dan user info)
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -27,21 +28,23 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  // hapus submissionStatus dan setSubmissionStatus
 };
 
+// Membuat context untuk user
 const UserContext = createContext<AuthContextType | undefined>(undefined);
 
+// Provider yang membungkus aplikasi dan menyediakan state user
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null); // menyimpan data user
+  const [loading, setLoading] = useState<boolean>(true); // status loading
+  const [error, setError] = useState<string>(''); // pesan error login
+  const router = useRouter(); // untuk redirect halaman
 
   useEffect(() => {
-    checkAuth();
+    checkAuth(); // cek login saat pertama kali render
   }, []);
 
+  // Fungsi untuk memverifikasi apakah user sudah login atau belum
   const checkAuth = async () => {
     setLoading(true);
     try {
@@ -52,16 +55,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) throw new Error('Belum login');
 
       const data = await res.json();
-      setUser(data.user);
-      localStorage.setItem('userId', data.user.id);
+      setUser(data.user); // set user ke context
+      localStorage.setItem('userId', data.user.id); // simpan ID ke localStorage
     } catch (err) {
-      setUser(null);
-      localStorage.removeItem('userId');
+      setUser(null); // jika gagal login, kosongkan user
+      localStorage.removeItem('userId'); // hapus dari localStorage
     } finally {
       setLoading(false);
     }
   };
 
+  // Fungsi untuk login
   const login = async (
     email: string,
     password: string
@@ -79,19 +83,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Login gagal');
 
-      setUser(data.user);
-      localStorage.setItem('userId', data.user.id);
+      setUser(data.user); // simpan user yang berhasil login
+      localStorage.setItem('userId', data.user.id); // simpan ID
 
-      router.push('/');
+      router.push('/'); // redirect ke halaman utama
       return true;
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message); // simpan pesan error
       return false;
     } finally {
       setLoading(false);
     }
   };
 
+  // Fungsi logout
   const logout = async () => {
     try {
       const res = await fetch('http://localhost:3002/auth/logout', {
@@ -100,9 +105,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (res.ok) {
-        setUser(null);
-        localStorage.removeItem('userId');
-        router.push('/login');
+        setUser(null); // kosongkan context
+        localStorage.removeItem('userId'); // hapus dari localStorage
+        router.push('/login'); // redirect ke login
       } else {
         console.error('Logout gagal:', await res.text());
       }
@@ -127,6 +132,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Hook custom untuk mengakses context user
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {

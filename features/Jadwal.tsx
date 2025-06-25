@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '../contexts/UserContext';
 import React from 'react';
 
+// Struktur data submission yang ditampilkan
 interface SubmissionItem {
   id: string;
   name: string;
@@ -19,60 +20,61 @@ interface SubmissionItem {
 }
 
 const Jadwal = () => {
-    const { user } = useUser();
-    const [submission, setSubmission] = useState<SubmissionItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+  const { user } = useUser(); // Ambil user dari context
+  const [submission, setSubmission] = useState<SubmissionItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const fetchSubmission = async () => {
-      setLoading(true);
-      setError(null);
+  // Ambil data submission milik mahasiswa
+  const fetchSubmission = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch('http://localhost:3002/auth/me', {
-          credentials: 'include',
-        });
+    try {
+      const response = await fetch('http://localhost:3002/auth/me', {
+        credentials: 'include',
+      });
 
-        if (!response.ok) throw new Error('Gagal mengambil data user');
+      if (!response.ok) throw new Error('Gagal mengambil data user');
 
-        const result = await response.json();
-        const user = result.user;
+      const result = await response.json();
+      const user = result.user;
 
-        console.log(user.student?.thesis_submission);
-        const submissions = user.student?.thesis_submission || [];
+      const submissions = user.student?.thesis_submission || [];
 
-        if (submissions.length === 0) {
-          setSubmission([]);
-          return;
-        }
-
-        const mapped: SubmissionItem[] = submissions.map((submission: any) => ({
-          id: submission.id,
-          name: user.student.name,
-          nim: user.student.nim,
-          thesis_title: submission.thesis_title,
-          status: submission.status.toLowerCase(),
-          reason_rejected: submission.reason_rejected,
-          file_url: submission.file_url,
-          date: submission.date
-            ? new Date(submission.date).toISOString().split('T')[0]
-            : 'Belum dijadwalkan',
-          time: submission.time || 'Belum dijadwalkan',
-          examiner_1_id: submission.examiner_1?.name || 'Belum ditentukan',
-          examiner_2_id: submission.examiner_2?.name || 'Belum ditentukan',
-        }));
-
-        setSubmission(mapped);
-      } catch (err: any) {
-        console.error('Error fetching submission:', err);
-        setError(err.message || 'Terjadi kesalahan');
-        setSubmission([]);
-      } finally {
-        setLoading(false);
+      if (submissions.length === 0) {
+        setSubmission([]); // Kosongkan jika tidak ada pengajuan
+        return;
       }
-    };
 
+      // Transformasi data agar cocok ditampilkan
+      const mapped: SubmissionItem[] = submissions.map((submission: any) => ({
+        id: submission.id,
+        name: user.student.name,
+        nim: user.student.nim,
+        thesis_title: submission.thesis_title,
+        status: submission.status.toLowerCase(),
+        reason_rejected: submission.reason_rejected,
+        file_url: submission.file_url,
+        date: submission.date
+          ? new Date(submission.date).toISOString().split('T')[0]
+          : 'Belum dijadwalkan',
+        time: submission.time || 'Belum dijadwalkan',
+        examiner_1_id: submission.examiner_1?.name || 'Belum ditentukan',
+        examiner_2_id: submission.examiner_2?.name || 'Belum ditentukan',
+      }));
 
+      setSubmission(mapped);
+    } catch (err: any) {
+      console.error('Error fetching submission:', err);
+      setError(err.message || 'Terjadi kesalahan');
+      setSubmission([]); // Kosongkan jika error
+    } finally {
+      setLoading(false); // Matikan loading di akhir
+    }
+  };
+
+  // Fetch data saat user tersedia
   useEffect(() => {
     if (!user) {
       setSubmission([]);
@@ -82,6 +84,7 @@ const Jadwal = () => {
     fetchSubmission();
   }, [user]);
 
+  // Loading UI
   if (loading) {
     return (
       <div className="bg-gray flex min-h-screen flex-col items-center justify-center">
@@ -91,6 +94,7 @@ const Jadwal = () => {
     );
   }
 
+  // Tampilkan pesan error
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-red-100 p-6">
@@ -99,6 +103,7 @@ const Jadwal = () => {
     );
   }
 
+  // Tampilan utama jadwal sidang
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-50">
       <h1 className="pb-8 pt-16 text-center text-xl font-semibold text-black">
@@ -106,6 +111,7 @@ const Jadwal = () => {
       </h1>
 
       <div className="flex w-full max-w-4xl flex-col items-center px-4">
+        {/* Jika ada data submission */}
         {submission.length > 0 ? (
           submission.map((item) => (
             <div
@@ -134,6 +140,7 @@ const Jadwal = () => {
                 <span className="font-semibold">Dosen Penguji 2:</span> {item.examiner_2_id}
               </div>
 
+              {/* Tampilkan link unduhan berkas */}
               <div className="mt-4 flex items-center">
                 {item.file_url && (
                   <a
@@ -147,6 +154,7 @@ const Jadwal = () => {
                 )}
               </div>
 
+              {/* Status pengajuan + alasan jika ditolak */}
               <div className="-m-6 mt-5 bg-gray-100 p-4">
                 <p
                   className={`text-md ps-2 font-medium ${
@@ -160,6 +168,7 @@ const Jadwal = () => {
                   <b>Status: {item.status.toUpperCase()}</b>
                 </p>
 
+                {/* Tampilkan alasan jika status ditolak */}
                 {item.status === 'ditolak' && item.reason_rejected && (
                   <p className="text-md mt-4 text-red-500">
                     <b>Alasan Penolakan:</b> {item.reason_rejected}
@@ -169,6 +178,7 @@ const Jadwal = () => {
             </div>
           ))
         ) : (
+          // Jika tidak ada submission
           <p className="flex w-full items-center justify-center text-center text-lg text-black">
             <i>Tidak ada data submission.</i>
           </p>
